@@ -27,6 +27,7 @@
 
 <script>
 import { hotelService } from '@/services/hotelService'
+import Swal from 'sweetalert2'
 
 export default {
   name: 'HotelList',
@@ -63,8 +64,51 @@ export default {
     addHotel() {
       this.$emit('addHotel')
     },
-    editHotel(hotel) {
+    /*    editHotel(hotel) {
       this.$emit('editHotel', hotel)
+    }, */
+    editHotel(hotel) {
+      // Creamos un formulario de edición usando SweetAlert2
+      Swal.fire({
+        title: 'Editar Hotel',
+        html: `
+      <label for="nombre">Nombre:</label>
+      <input type="text" id="nombre" class="swal2-input" value="${hotel.nombre}">
+      <label for="direccion">Dirección:</label>
+      <input type="text" id="direccion" class="swal2-input" value="${hotel.direccion}">
+      <label for="ciudad">Ciudad:</label>
+      <input type="text" id="ciudad" class="swal2-input" value="${hotel.ciudad}">
+      <label for="nit">NIT:</label>
+      <input type="text" id="nit" class="swal2-input" value="${hotel.nit}">
+      <label for="numero_habitaciones">Número de Habitaciones:</label>
+      <input type="number" id="numero_habitaciones" class="swal2-input" value="${hotel.numero_habitaciones}">
+    `,
+        focusConfirm: false,
+        preConfirm: () => {
+          // Obtener los valores de los inputs
+          const nombre = document.getElementById('nombre').value
+          const direccion = document.getElementById('direccion').value
+          const ciudad = document.getElementById('ciudad').value
+          const nit = document.getElementById('nit').value
+          const numero_habitaciones = document.getElementById('numero_habitaciones').value
+
+          // Realizamos el PUT con los datos del formulario
+          return {
+            id: hotel.id,
+            nombre,
+            direccion,
+            ciudad,
+            nit,
+            numero_habitaciones,
+          }
+        },
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const updatedHotel = result.value
+          // Hacemos la llamada al API para actualizar el hotel
+          this.updateHotel(updatedHotel)
+        }
+      })
     },
     assignRoom(hotel) {
       this.$router.push({

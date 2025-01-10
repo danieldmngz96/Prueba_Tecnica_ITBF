@@ -1,92 +1,75 @@
 <template>
   <div>
     <h1>Sistema de Gestión Hotelera</h1>
-    <HotelList
-      :hotels="hotels"
-      @addHotel="showHotelForm"
-      @editHotel="editHotel"
-      @assignRoom="assignRoom"
-    />
 
-    <!-- Formulario para agregar o editar hoteles -->
-    <HotelForm v-if="showForm" :hotel="selectedHotel" @saveHotel="saveHotel" @cancel="cancelForm" />
-
-    <!-- Componente para asignar habitaciones -->
-    <RoomAssignment
-      v-if="showRoomAssignment"
-      :hotel="selectedHotel"
-      @assignRoom="saveRoomAssignment"
-    />
+    <!-- Lista de hoteles -->
+    <div v-if="hotels.length > 0">
+      <h2>Lista de Hoteles</h2>
+      <ul>
+        <li v-for="hotel in hotels" :key="hotel.id">
+          <strong>{{ hotel.nombre }}</strong> - {{ hotel.ubicacion }}
+        </li>
+      </ul>
+    </div>
+    <p v-else>Cargando hoteles o no hay hoteles disponibles.</p>
   </div>
 </template>
 
 <script>
-import HotelList from './HotelList.vue'
-import HotelForm from './HotelForm.vue'
-
-import RoomAssignment from './RoomAssignment.vue'
+import { hotelService } from '@/services/hotelService.js'
 
 export default {
   name: 'HomeComponent',
-  components: {
-    HotelList,
-    HotelForm,
-    RoomAssignment,
-  },
   data() {
     return {
       hotels: [], // Lista de hoteles
-      selectedHotel: null, // Hotel seleccionado para editar o asignar habitaciones
-      showForm: false, // Mostrar el formulario de hotel
-      showRoomAssignment: false, // Mostrar el componente de asignación de habitaciones
+      loading: false, // Estado de carga
+      error: null, // Estado de error
     }
   },
-  methods: {
-    showHotelForm() {
-      this.selectedHotel = null
-      this.showForm = true
-      this.showRoomAssignment = false
-    },
-    editHotel(hotel) {
-      this.selectedHotel = { ...hotel }
-      this.showForm = true
-      this.showRoomAssignment = false
-    },
-    saveHotel(hotel) {
-      if (hotel.id) {
-        // Editar hotel existente
-        const index = this.hotels.findIndex((h) => h.id === hotel.id)
-        if (index !== -1) {
-          this.hotels[index] = hotel
-        }
-      } else {
-        // Agregar nuevo hotel
-        hotel.id = Date.now() // Generar un ID único
-        this.hotels.push(hotel)
-      }
-      this.cancelForm()
-    },
-    cancelForm() {
-      this.showForm = false
-      this.selectedHotel = null
-    },
-    assignRoom(hotel) {
-      this.selectedHotel = hotel
-      this.showForm = false
-      this.showRoomAssignment = true
-    },
-    saveRoomAssignment(data) {
-      const { hotel, roomType, accommodation } = data
-      const index = this.hotels.findIndex((h) => h.id === hotel.id)
-      if (index !== -1) {
-        if (!this.hotels[index].rooms) {
-          this.hotels[index].rooms = []
-        }
-        this.hotels[index].rooms.push({ roomType, accommodation })
-      }
-      this.showRoomAssignment = false
-      this.selectedHotel = null
-    },
+  async mounted() {
+    this.loading = true
+    try {
+      const response = await hotelService.getHotels()
+      this.hotels = response.data // Accede a los hoteles dentro de 'data'
+      console.log('Hoteles cargados:', this.hotels) // Verifica que los hoteles estén bien
+    } catch (err) {
+      this.error = err.message || 'Error al cargar los hoteles'
+      console.error(this.error)
+    } finally {
+      this.loading = false
+    }
   },
 }
 </script>
+
+<style scoped>
+h1 {
+  color: #333;
+  font-size: 2em;
+  margin-bottom: 1em;
+}
+
+h2 {
+  color: #555;
+  margin-bottom: 0.5em;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  margin: 0.5em 0;
+  background-color: #f9f9f9;
+  padding: 0.5em;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+p {
+  color: #888;
+  font-style: italic;
+}
+</style>
